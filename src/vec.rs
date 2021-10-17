@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -13,11 +13,11 @@ impl Vec3 {
     }
 
     pub fn len(&self) -> f32 {
-        (self.x * self.x + self.y * self.y + self.z * self.x).sqrt()
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
     pub fn square_len(&self) -> f32 {
-        self.x * self.x + self.y * self.y + self.z * self.x
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     pub fn unit_vector(&self) -> Vec3 {
