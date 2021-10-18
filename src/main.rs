@@ -1,38 +1,45 @@
 #![forbid(unsafe_code)]
 
+extern crate rand;
+
+mod camera;
 mod hittable;
 mod ray;
 mod vec;
 
+use camera::Camera;
 use hittable::{Hittable, HittableList, Sphere};
+use rand::Rng;
 use ray::Ray;
 use vec::Vec3;
 
 fn main() {
     let nx = 200;
     let ny = 100;
+    let ns = 100;
     println!("P3");
     println!("{} {}", nx, ny);
     println!("255");
-
-    let lower_left_corner = Vec3::new(-2.0, -1.0, -1.0);
-    let horizontal = Vec3::new(4.0, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, 2.0, 0.0);
-    let origin = Vec3::new(0.0, 0.0, 0.0);
 
     let world = HittableList::new(vec![
         Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)),
         Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)),
     ]);
+    let camera = Camera::default();
+    let mut rng = rand::thread_rng();
 
     for j in (0..=ny - 1).rev() {
         for i in 0..nx {
-            let u = i as f32 / nx as f32;
-            let v = j as f32 / ny as f32;
-            let r = Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
+            let mut c = Vec3::new(0.0, 0.0, 0.0);
+            for _ in 0..ns {
+                let u = (i as f32 + rng.gen::<f32>()) / nx as f32;
+                let v = (j as f32 + rng.gen::<f32>()) / ny as f32;
+                let r = camera.get_ray(u, v);
+                // let p = r.point_at_parameter(2.0);
+                c += color(r, &world);
+            }
+            c /= ns as f32;
 
-            // let p = r.point_at_parameter(2.0);
-            let c = color(r, &world);
             let ir = (255.99 * c.x) as i32;
             let ig = (255.99 * c.y) as i32;
             let ib = (255.99 * c.z) as i32;
