@@ -39,6 +39,7 @@ fn main() {
                 c += color(r, &world);
             }
             c /= ns as f32;
+            c = Vec3::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt());
 
             let ir = (255.99 * c.x) as i32;
             let ig = (255.99 * c.y) as i32;
@@ -49,11 +50,23 @@ fn main() {
 }
 
 fn color<T: Hittable>(r: Ray, world: &T) -> Vec3 {
-    if let Some(hit) = world.hit(&r, 0.0, f32::MAX) {
-        0.5 * Vec3::new(hit.normal.x + 1.0, hit.normal.y + 1.0, hit.normal.z + 1.0)
+    if let Some(hit) = world.hit(&r, 0.001, f32::MAX) {
+        let target = hit.p + hit.normal + random_in_unit_sphere();
+        0.5 * color(Ray::new(hit.p, target - hit.p), world)
     } else {
         let unit_direction = r.direction.unit_vector();
         let t = 0.5 * (unit_direction.y + 1.0);
         (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
+    }
+}
+
+fn random_in_unit_sphere() -> Vec3 {
+    let mut rng = rand::thread_rng();
+    loop {
+        let p = 2.0 * Vec3::new(rng.gen::<f32>(), rng.gen::<f32>(), rng.gen::<f32>())
+            - Vec3::new(1.0, 1.0, 1.0);
+        if p.square_len() < 1.0 {
+            return p;
+        }
     }
 }
