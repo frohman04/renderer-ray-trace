@@ -1,16 +1,24 @@
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec::Vec3;
+use std::rc::Rc;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct HitRecord {
     pub t: f32,
     pub p: Vec3,
     pub normal: Vec3,
+    pub material: Rc<dyn Material>,
 }
 
 impl HitRecord {
-    pub fn new(t: f32, p: Vec3, normal: Vec3) -> HitRecord {
-        HitRecord { t, p, normal }
+    pub fn new(t: f32, p: Vec3, normal: Vec3, material: Rc<dyn Material>) -> HitRecord {
+        HitRecord {
+            t,
+            p,
+            normal,
+            material,
+        }
     }
 }
 
@@ -42,15 +50,20 @@ impl Hittable for HittableList {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     center: Vec3,
     radius: f32,
+    material: Rc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32) -> Sphere {
-        Sphere { center, radius }
+    pub fn new(center: Vec3, radius: f32, material: Rc<dyn Material>) -> Sphere {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -66,12 +79,22 @@ impl Hittable for Sphere {
             let temp = (-b - discriminant.sqrt()) / a;
             if t_min < temp && temp < t_max {
                 let p = r.point_at_parameter(temp);
-                Some(HitRecord::new(temp, p, (p - self.center) / self.radius))
+                Some(HitRecord::new(
+                    temp,
+                    p,
+                    (p - self.center) / self.radius,
+                    self.material.clone(),
+                ))
             } else {
                 let temp = (-b + discriminant.sqrt()) / a;
                 if t_min < temp && temp < t_max {
                     let p = r.point_at_parameter(temp);
-                    Some(HitRecord::new(temp, p, (p - self.center) / self.radius))
+                    Some(HitRecord::new(
+                        temp,
+                        p,
+                        (p - self.center) / self.radius,
+                        self.material.clone(),
+                    ))
                 } else {
                     None
                 }
