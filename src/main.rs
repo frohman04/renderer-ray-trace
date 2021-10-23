@@ -51,7 +51,13 @@ fn main() {
             Rc::new(Dialectric::new(1.5)),
         )),
     ]);
-    let camera = Camera::default();
+    let camera = Camera::new(
+        Vec3::new(-2.0, 2.0, 1.0),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        20.0,
+        nx as f32 / ny as f32,
+    );
     let mut rng = rand::thread_rng();
 
     for j in (0..=ny - 1).rev() {
