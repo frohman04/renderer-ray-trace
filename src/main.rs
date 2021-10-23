@@ -10,7 +10,7 @@ mod vec;
 
 use camera::Camera;
 use hittable::{Hittable, HittableList, Sphere};
-use material::{Lambertian, Metal};
+use material::{Dialectric, Lambertian, Metal};
 use rand::Rng;
 use ray::Ray;
 use std::rc::Rc;
@@ -43,7 +43,12 @@ fn main() {
         Box::new(Sphere::new(
             Vec3::new(-1.0, 0.0, -1.0),
             0.5,
-            Rc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8))),
+            Rc::new(Dialectric::new(1.5)),
+        )),
+        Box::new(Sphere::new(
+            Vec3::new(-1.0, 0.0, -1.0),
+            -0.45,
+            Rc::new(Dialectric::new(1.5)),
         )),
     ]);
     let camera = Camera::default();

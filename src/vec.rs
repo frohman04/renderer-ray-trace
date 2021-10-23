@@ -98,6 +98,14 @@ impl ops::Mul<f32> for Vec3 {
     }
 }
 
+impl ops::Mul<f32> for &Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vec3::new(self.x * rhs, self.y * rhs, self.z * rhs)
+    }
+}
+
 impl ops::MulAssign<f32> for Vec3 {
     fn mul_assign(&mut self, rhs: f32) {
         self.x *= rhs;
