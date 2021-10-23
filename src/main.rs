@@ -17,53 +17,24 @@ use std::rc::Rc;
 use vec::Vec3;
 
 fn main() {
-    let nx = 200;
-    let ny = 100;
-    let ns = 100;
+    let aspect_ratio: f32 = 16.0 / 9.0;
+    let ny = 720;
+    let nx = (ny as f32 * aspect_ratio) as i32;
+    let ns = 500;
     println!("P3");
     println!("{} {}", nx, ny);
     println!("255");
 
-    let world = HittableList::new(vec![
-        Box::new(Sphere::new(
-            Vec3::new(0.0, 0.0, -1.0),
-            0.5,
-            Rc::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))),
-        )),
-        Box::new(Sphere::new(
-            Vec3::new(0.0, -100.5, -1.0),
-            100.0,
-            Rc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0))),
-        )),
-        Box::new(Sphere::new(
-            Vec3::new(1.0, 0.0, -1.0),
-            0.5,
-            Rc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2))),
-        )),
-        Box::new(Sphere::new(
-            Vec3::new(-1.0, 0.0, -1.0),
-            0.5,
-            Rc::new(Dialectric::new(1.5)),
-        )),
-        Box::new(Sphere::new(
-            Vec3::new(-1.0, 0.0, -1.0),
-            -0.45,
-            Rc::new(Dialectric::new(1.5)),
-        )),
-    ]);
+    let world = random_scene();
 
-    let lookfrom = Vec3::new(3.0, 3.0, 2.0);
-    let lookat = Vec3::new(0.0, 0.0, -1.0);
-    let dist_to_focus = (lookfrom - lookat).len();
-    let aperture = 2.0f32;
     let camera = Camera::new(
-        lookfrom,
-        lookat,
+        Vec3::new(13.0, 2.0, 3.0),
+        Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0),
         20.0,
         nx as f32 / ny as f32,
-        aperture,
-        dist_to_focus,
+        0.1,
+        10.0,
     );
     let mut rng = rand::thread_rng();
 
@@ -104,4 +75,73 @@ fn color(r: Ray, world: &dyn Hittable, depth: i32) -> Vec3 {
         let t = 0.5 * (unit_direction.y + 1.0);
         (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
     }
+}
+
+fn random_scene() -> HittableList {
+    let mut rng = rand::thread_rng();
+
+    let mut list: Vec<Box<dyn Hittable>> = vec![
+        Box::new(Sphere::new(
+            Vec3::new(0.0, -1000.0, 0.0),
+            1000.0,
+            Rc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5))),
+        )),
+        Box::new(Sphere::new(
+            Vec3::new(0.0, 1.0, 0.0),
+            1.0,
+            Rc::new(Dialectric::new(1.5)),
+        )),
+        Box::new(Sphere::new(
+            Vec3::new(-4.0, 1.0, 0.0),
+            1.0,
+            Rc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1))),
+        )),
+        Box::new(Sphere::new(
+            Vec3::new(4.0, 1.0, 0.0),
+            1.0,
+            Rc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5))),
+        )),
+    ];
+    let cmp = Vec3::new(4.0, 0.2, 0.0);
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rng.gen::<f32>();
+            let center = Vec3::new(
+                a as f32 + 0.9f32 * rng.gen::<f32>(),
+                0.2,
+                b as f32 + 0.9f32 * rng.gen::<f32>(),
+            );
+            if (center - cmp).len() > 0.9 {
+                if choose_mat < 0.8 {
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Rc::new(Lambertian::new(Vec3::new(
+                            rng.gen::<f32>() * rng.gen::<f32>(),
+                            rng.gen::<f32>() * rng.gen::<f32>(),
+                            rng.gen::<f32>() * rng.gen::<f32>(),
+                        ))),
+                    )));
+                } else if choose_mat < 0.95 {
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Rc::new(Metal::new(Vec3::new(
+                            0.5 * (1.0 + rng.gen::<f32>()),
+                            0.5 * (1.0 + rng.gen::<f32>()),
+                            0.5 * (1.0 + rng.gen::<f32>()),
+                        ))),
+                    )));
+                } else {
+                    list.push(Box::new(Sphere::new(
+                        center,
+                        0.2,
+                        Rc::new(Dialectric::new(1.5)),
+                    )))
+                }
+            }
+        }
+    }
+
+    HittableList::new(list)
 }
