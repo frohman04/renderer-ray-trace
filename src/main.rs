@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 extern crate rand;
+extern crate rayon;
 extern crate time;
 
 mod camera;
@@ -15,7 +16,8 @@ use crate::material::{Dialectric, Lambertian, Metal};
 use crate::rand::Rng;
 use crate::ray::Ray;
 use crate::vec::{Color, Point3, Vec3};
-use std::rc::Rc;
+use rayon::prelude::*;
+use std::sync::Arc;
 use time::OffsetDateTime;
 
 fn main() {
@@ -39,26 +41,32 @@ fn main() {
         0.1,
         10.0,
     );
-    let mut rng = rand::thread_rng();
 
     let start_time = OffsetDateTime::now_local().unwrap();
     for j in (0..IMAGE_HEIGHT).rev() {
         let it_start_time = OffsetDateTime::now_local().unwrap();
-        for i in 0..IMAGE_WIDTH {
-            let mut c = Color::new(0.0, 0.0, 0.0);
-            for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (i as f32 + rng.gen::<f32>()) / IMAGE_WIDTH as f32;
-                let v = (j as f32 + rng.gen::<f32>()) / IMAGE_HEIGHT as f32;
-                let r = camera.get_ray(u, v);
-                // let p = r.point_at_parameter(2.0);
-                c += color(r, &world, MAX_DEPTH);
-            }
-            c /= SAMPLES_PER_PIXEL as f32;
-            c = Color::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt());
 
-            let ir = (255.99 * c.x) as i32;
-            let ig = (255.99 * c.y) as i32;
-            let ib = (255.99 * c.z) as i32;
+        let scanline: Vec<Color> = (0..IMAGE_WIDTH)
+            .into_par_iter()
+            .map(|i| {
+                let mut rng = rand::thread_rng();
+
+                let mut c = Color::new(0.0, 0.0, 0.0);
+                for _ in 0..SAMPLES_PER_PIXEL {
+                    let u = (i as f32 + rng.gen::<f32>()) / IMAGE_WIDTH as f32;
+                    let v = (j as f32 + rng.gen::<f32>()) / IMAGE_HEIGHT as f32;
+                    let r = camera.get_ray(u, v);
+                    // let p = r.point_at_parameter(2.0);
+                    c += color(r, &world, MAX_DEPTH);
+                }
+                c /= SAMPLES_PER_PIXEL as f32;
+                Color::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt())
+            })
+            .collect();
+        for pixel in scanline {
+            let ir = (255.99 * pixel.x) as i32;
+            let ig = (255.99 * pixel.y) as i32;
+            let ib = (255.99 * pixel.z) as i32;
             println!("{} {} {}", ir, ig, ib);
         }
 
@@ -117,22 +125,22 @@ fn random_scene() -> HittableList {
         Box::new(Sphere::new(
             Point3::new(0.0, -1000.0, 0.0),
             1000.0,
-            Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5))),
+            Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5))),
         )),
         Box::new(Sphere::new(
             Point3::new(0.0, 1.0, 0.0),
             1.0,
-            Rc::new(Dialectric::new(1.5)),
+            Arc::new(Dialectric::new(1.5)),
         )),
         Box::new(Sphere::new(
             Point3::new(-4.0, 1.0, 0.0),
             1.0,
-            Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1))),
+            Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1))),
         )),
         Box::new(Sphere::new(
             Point3::new(4.0, 1.0, 0.0),
             1.0,
-            Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5))),
+            Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5))),
         )),
     ];
     let cmp = Vec3::new(4.0, 0.2, 0.0);
@@ -149,7 +157,7 @@ fn random_scene() -> HittableList {
                     list.push(Box::new(Sphere::new(
                         center,
                         0.2,
-                        Rc::new(Lambertian::new(Color::new(
+                        Arc::new(Lambertian::new(Color::new(
                             rng.gen::<f32>() * rng.gen::<f32>(),
                             rng.gen::<f32>() * rng.gen::<f32>(),
                             rng.gen::<f32>() * rng.gen::<f32>(),
@@ -159,7 +167,7 @@ fn random_scene() -> HittableList {
                     list.push(Box::new(Sphere::new(
                         center,
                         0.2,
-                        Rc::new(Metal::new(Color::new(
+                        Arc::new(Metal::new(Color::new(
                             0.5 * (1.0 + rng.gen::<f32>()),
                             0.5 * (1.0 + rng.gen::<f32>()),
                             0.5 * (1.0 + rng.gen::<f32>()),
@@ -169,7 +177,7 @@ fn random_scene() -> HittableList {
                     list.push(Box::new(Sphere::new(
                         center,
                         0.2,
-                        Rc::new(Dialectric::new(1.5)),
+                        Arc::new(Dialectric::new(1.5)),
                     )))
                 }
             }

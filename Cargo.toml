@@ -10,4 +10,5 @@ resolver = "2"
 
 [dependencies]
 rand = "~0.8.4"
+rayon = "~1.5.1"
 time = { version = "~0.3", features=["formatting", "local-offset"] }
