@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 extern crate rand;
+extern crate time;
 
 mod camera;
 mod hittable;
@@ -8,20 +9,21 @@ mod material;
 mod ray;
 mod vec;
 
-use camera::Camera;
-use hittable::{Hittable, HittableList, Sphere};
-use material::{Dialectric, Lambertian, Metal};
-use rand::Rng;
-use ray::Ray;
+use crate::camera::Camera;
+use crate::hittable::{Hittable, HittableList, Sphere};
+use crate::material::{Dialectric, Lambertian, Metal};
+use crate::rand::Rng;
+use crate::ray::Ray;
+use crate::vec::{Color, Point3, Vec3};
 use std::rc::Rc;
-use vec::{Color, Point3, Vec3};
+use time::OffsetDateTime;
 
 fn main() {
     const ASPECT_RATIO: f32 = 16.0 / 9.0;
-    const IMAGE_HEIGHT: i32 = 720;
-    const IMAGE_WIDTH: i32 = (IMAGE_HEIGHT as f32 * ASPECT_RATIO) as i32;
-    const SAMPLES_PER_PIXEL: i32 = 500;
-    const MAX_DEPTH: i32 = 50;
+    const IMAGE_HEIGHT: u32 = 720;
+    const IMAGE_WIDTH: u32 = (IMAGE_HEIGHT as f32 * ASPECT_RATIO) as u32;
+    const SAMPLES_PER_PIXEL: u32 = 500;
+    const MAX_DEPTH: u32 = 50;
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
@@ -39,7 +41,9 @@ fn main() {
     );
     let mut rng = rand::thread_rng();
 
+    let start_time = OffsetDateTime::now_local().unwrap();
     for j in (0..IMAGE_HEIGHT).rev() {
+        let it_start_time = OffsetDateTime::now_local().unwrap();
         for i in 0..IMAGE_WIDTH {
             let mut c = Color::new(0.0, 0.0, 0.0);
             for _ in 0..SAMPLES_PER_PIXEL {
@@ -57,10 +61,38 @@ fn main() {
             let ib = (255.99 * c.z) as i32;
             println!("{} {} {}", ir, ig, ib);
         }
+
+        let curr_time = OffsetDateTime::now_local().unwrap();
+        let last_it_elapsed = curr_time - it_start_time;
+        let elapsed = curr_time - start_time;
+        let time_per_iteration = elapsed / (IMAGE_HEIGHT - j);
+        let est_time_remaining = time_per_iteration * j;
+        let est_time_of_completion = curr_time + time_per_iteration * IMAGE_HEIGHT;
+        eprintln!(
+            "Rendered scanline {} of {}\n\
+            \tlast line: {}.{:0>3}s\n\
+            \ttime/line: {}.{:0>3}s\n\
+            \telapsed:   {}:{:0>2}:{:0>2}\n\
+            \tremaining: {}:{:0>2}:{:0>2}\n\
+            \tETA:       {}",
+            IMAGE_HEIGHT - j,
+            IMAGE_HEIGHT,
+            last_it_elapsed.whole_seconds(),
+            last_it_elapsed.whole_milliseconds() % 1000,
+            time_per_iteration.whole_seconds(),
+            time_per_iteration.whole_milliseconds() % 1000,
+            elapsed.whole_hours(),
+            elapsed.whole_minutes() % 60,
+            elapsed.whole_seconds() % 60,
+            est_time_remaining.whole_hours(),
+            est_time_remaining.whole_minutes() % 60,
+            est_time_remaining.whole_seconds() % 60,
+            est_time_of_completion,
+        );
     }
 }
 
-fn color(r: Ray, world: &dyn Hittable, depth: i32) -> Color {
+fn color(r: Ray, world: &dyn Hittable, depth: u32) -> Color {
     if let Some(hit) = world.hit(&r, 0.001, f32::MAX) {
         if depth > 0 {
             if let Some((scattered, attenuation)) = hit.material.scatter(&r, &hit) {
