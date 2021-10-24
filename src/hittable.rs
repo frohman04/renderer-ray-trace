@@ -1,18 +1,18 @@
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::vec::{Point3, Vec3};
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct HitRecord {
     pub t: f32,
-    pub p: Vec3,
+    pub p: Point3,
     pub normal: Vec3,
     pub material: Rc<dyn Material>,
 }
 
 impl HitRecord {
-    pub fn new(t: f32, p: Vec3, normal: Vec3, material: Rc<dyn Material>) -> HitRecord {
+    pub fn new(t: f32, p: Point3, normal: Vec3, material: Rc<dyn Material>) -> HitRecord {
         HitRecord {
             t,
             p,
@@ -52,13 +52,13 @@ impl Hittable for HittableList {
 
 #[derive(Debug, Clone)]
 pub struct Sphere {
-    center: Vec3,
+    center: Point3,
     radius: f32,
     material: Rc<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Rc<dyn Material>) -> Sphere {
+    pub fn new(center: Point3, radius: f32, material: Rc<dyn Material>) -> Sphere {
         Sphere {
             center,
             radius,

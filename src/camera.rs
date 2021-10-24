@@ -1,33 +1,32 @@
 use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::vec::{Point3, Vec3};
 
 use rand::Rng;
 
 pub struct Camera {
-    origin: Vec3,
-    lower_left_corner: Vec3,
+    origin: Point3,
+    lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
     u: Vec3,
     v: Vec3,
-    w: Vec3,
     lens_radius: f32,
 }
 
 impl Camera {
     pub fn new(
-        lookfrom: Vec3,
-        lookat: Vec3,
+        lookfrom: Point3,
+        lookat: Point3,
         vup: Vec3,
         vfov: f32,
-        aspect: f32,
+        aspect_ratio: f32,
         aperture: f32,
         focust_dist: f32,
     ) -> Camera {
         let lens_radius = aperture / 2.0;
         let theta = vfov * std::f32::consts::PI / 180.0;
         let half_height = (theta / 2.0).tan();
-        let half_width = aspect * half_height;
+        let half_width = aspect_ratio * half_height;
         let origin = lookfrom;
         let w = (lookfrom - lookat).unit_vector();
         let u = vup.cross(&w).unit_vector();
@@ -43,7 +42,6 @@ impl Camera {
             vertical,
             u,
             v,
-            w,
             lens_radius,
         }
     }

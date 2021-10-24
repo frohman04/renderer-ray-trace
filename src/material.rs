@@ -1,26 +1,26 @@
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::vec::{Color, Vec3};
 
 use rand::Rng;
 
 pub trait Material: core::fmt::Debug {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)>;
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)>;
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct Lambertian {
-    albedo: Vec3,
+    albedo: Color,
 }
 
 impl Lambertian {
-    pub fn new(albedo: Vec3) -> Lambertian {
+    pub fn new(albedo: Color) -> Lambertian {
         Lambertian { albedo }
     }
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
         let target = rec.p + rec.normal + random_in_unit_sphere();
         let scattered = Ray::new(rec.p, target - rec.p);
         let attenuation = self.albedo;
@@ -41,17 +41,17 @@ fn random_in_unit_sphere() -> Vec3 {
 
 #[derive(Debug, Copy, Clone)]
 pub struct Metal {
-    albedo: Vec3,
+    albedo: Color,
 }
 
 impl Metal {
-    pub fn new(albedo: Vec3) -> Metal {
+    pub fn new(albedo: Color) -> Metal {
         Metal { albedo }
     }
 }
 
 impl Material for Metal {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
         let reflected = reflect(&r_in.direction.unit_vector(), &rec.normal);
         let scattered = Ray::new(rec.p, reflected);
         let attenuation = self.albedo;
@@ -79,7 +79,7 @@ impl Dialectric {
 }
 
 impl Material for Dialectric {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
         let mut rng = rand::thread_rng();
 
         let reflected = reflect(&r_in.direction, &rec.normal);
