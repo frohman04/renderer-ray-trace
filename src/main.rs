@@ -5,12 +5,14 @@ extern crate rayon;
 extern crate time;
 
 mod camera;
+mod format;
 mod hittable;
 mod material;
 mod ray;
 mod vec;
 
 use crate::camera::Camera;
+use crate::format::{Format, Ppm};
 use crate::hittable::{Hittable, HittableList, Sphere};
 use crate::material::{Dialectric, Lambertian, Metal};
 use crate::rand::Rng;
@@ -22,13 +24,11 @@ use time::OffsetDateTime;
 
 fn main() {
     const ASPECT_RATIO: f32 = 16.0 / 9.0;
-    const IMAGE_HEIGHT: u32 = 720;
+    const IMAGE_HEIGHT: u32 = 360;
     const IMAGE_WIDTH: u32 = (IMAGE_HEIGHT as f32 * ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: u32 = 500;
     const MAX_DEPTH: u32 = 50;
-    println!("P3");
-    println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
-    println!("255");
+    let mut image = Ppm::new(IMAGE_WIDTH, IMAGE_HEIGHT);
 
     let world = random_scene();
 
@@ -63,11 +63,8 @@ fn main() {
                 Color::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt())
             })
             .collect();
-        for pixel in scanline {
-            let ir = (255.99 * pixel.x) as i32;
-            let ig = (255.99 * pixel.y) as i32;
-            let ib = (255.99 * pixel.z) as i32;
-            println!("{} {} {}", ir, ig, ib);
+        for (i, pixel) in scanline.into_iter().enumerate() {
+            image.set_pixel(i as u32, j, pixel);
         }
 
         let curr_time = OffsetDateTime::now_local().unwrap();
@@ -98,6 +95,8 @@ fn main() {
             est_time_of_completion,
         );
     }
+
+    image.save("image").expect("Unable to save image");
 }
 
 fn color(r: Ray, world: &dyn Hittable, depth: u32) -> Color {

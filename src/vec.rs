@@ -15,6 +15,18 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
+    pub fn r(&self) -> u8 {
+        (255.99 * self.x) as u8
+    }
+
+    pub fn g(&self) -> u8 {
+        (255.99 * self.y) as u8
+    }
+
+    pub fn b(&self) -> u8 {
+        (255.99 * self.z) as u8
+    }
+
     pub fn len(&self) -> f32 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
