@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+extern crate bmp;
 extern crate rand;
 extern crate rayon;
 extern crate time;
@@ -12,7 +13,7 @@ mod ray;
 mod vec;
 
 use crate::camera::Camera;
-use crate::format::{Format, Ppm};
+use crate::format::{Bmp, Format};
 use crate::hittable::{Hittable, HittableList, Sphere};
 use crate::material::{Dialectric, Lambertian, Metal};
 use crate::rand::Rng;
@@ -28,7 +29,7 @@ fn main() {
     const IMAGE_WIDTH: u32 = (IMAGE_HEIGHT as f32 * ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: u32 = 500;
     const MAX_DEPTH: u32 = 50;
-    let mut image = Ppm::new(IMAGE_WIDTH, IMAGE_HEIGHT);
+    let mut image = Bmp::new(IMAGE_WIDTH, IMAGE_HEIGHT);
 
     let world = random_scene();
 

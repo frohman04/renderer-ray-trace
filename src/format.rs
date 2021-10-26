@@ -1,4 +1,5 @@
 use crate::vec::Color;
+use bmp::{Image, Pixel};
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{Result, Write};
@@ -77,5 +78,54 @@ impl Format for Ppm {
                 .write_all(format!("{} {} {}\n", pixel.r(), pixel.g(), pixel.b()).as_bytes())?;
         }
         Ok(())
+    }
+}
+
+pub struct Bmp {
+    image: Image,
+}
+
+impl Format for Bmp {
+    fn new(width: u32, height: u32) -> Self {
+        Bmp {
+            image: Image::new(width, height),
+        }
+    }
+
+    fn get_width(&self) -> u32 {
+        self.image.get_width()
+    }
+
+    fn get_height(&self) -> u32 {
+        self.image.get_height()
+    }
+
+    fn set_pixel(&mut self, x: u32, y: u32, color: Color) {
+        self.image.set_pixel(
+            x,
+            self.get_height() - y - 1,
+            Pixel::new(color.r(), color.g(), color.b()),
+        )
+    }
+
+    fn get_pixel(&self, x: u32, y: u32) -> Color {
+        let pixel = self.image.get_pixel(x, y);
+        Color::new(
+            pixel.r as f32 / 255.0,
+            pixel.g as f32 / 255.0,
+            pixel.b as f32 / 255.0,
+        )
+    }
+
+    fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        if path.as_ref().extension() != Some(OsStr::new("bmp")) {
+            self.image.save(path.as_ref().with_extension("bmp"))
+        } else {
+            self.image.save(path)
+        }
+    }
+
+    fn to_writer<W: Write>(&self, destination: &mut W) -> Result<()> {
+        self.image.to_writer(destination)
     }
 }
