@@ -1,10 +1,10 @@
 #![forbid(unsafe_code)]
 
-extern crate bmp;
 extern crate rand;
 extern crate rayon;
 extern crate time;
 
+mod bmp;
 mod camera;
 mod format;
 mod hittable;

@@ -1,5 +1,5 @@
+use crate::bmp::{Image, Pixel};
 use crate::vec::Color;
-use bmp::{Image, Pixel};
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{Result, Write};
