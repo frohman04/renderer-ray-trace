@@ -44,10 +44,11 @@ fn main() {
     );
 
     let start_time = OffsetDateTime::now_local().unwrap();
-    for j in (0..IMAGE_HEIGHT).rev() {
+    let mut row_count = 0u32;
+    for j in image.iter_rows() {
         let it_start_time = OffsetDateTime::now_local().unwrap();
 
-        let scanline: Vec<Color> = (0..IMAGE_WIDTH)
+        let scanline: Vec<Color> = (0..image.get_width())
             .into_par_iter()
             .map(|i| {
                 let mut rng = rand::thread_rng();
@@ -68,12 +69,14 @@ fn main() {
             image.set_pixel(i as u32, j, pixel);
         }
 
+        row_count += 1;
+        let rows_remaining = image.get_height() - row_count;
         let curr_time = OffsetDateTime::now_local().unwrap();
         let last_it_elapsed = curr_time - it_start_time;
         let elapsed = curr_time - start_time;
-        let time_per_iteration = elapsed / (IMAGE_HEIGHT - j);
-        let est_time_remaining = time_per_iteration * j;
-        let est_time_of_completion = curr_time + time_per_iteration * IMAGE_HEIGHT;
+        let time_per_iteration = elapsed / row_count;
+        let est_time_remaining = time_per_iteration * rows_remaining;
+        let est_time_of_completion = curr_time + time_per_iteration * rows_remaining;
         eprintln!(
             "Rendered scanline {} of {}\n\
             \tlast line: {}.{:0>3}s\n\
@@ -81,7 +84,7 @@ fn main() {
             \telapsed:   {}:{:0>2}:{:0>2}\n\
             \tremaining: {}:{:0>2}:{:0>2}\n\
             \tETA:       {}",
-            IMAGE_HEIGHT - j,
+            row_count,
             IMAGE_HEIGHT,
             last_it_elapsed.whole_seconds(),
             last_it_elapsed.whole_milliseconds() % 1000,

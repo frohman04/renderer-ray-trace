@@ -3,14 +3,20 @@ use crate::vec::Color;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{Result, Write};
+use std::iter::Rev;
+use std::ops::Range;
 use std::path::Path;
 
 pub trait Format {
+    type IntoIter: IntoIterator<Item = u32>;
+
     fn new(width: u32, height: u32) -> Self;
 
     fn get_width(&self) -> u32;
 
     fn get_height(&self) -> u32;
+
+    fn iter_rows(&self) -> Self::IntoIter;
 
     fn set_pixel(&mut self, x: u32, y: u32, color: Color);
 
@@ -34,6 +40,8 @@ impl Ppm {
 }
 
 impl Format for Ppm {
+    type IntoIter = Rev<Range<u32>>;
+
     fn new(width: u32, height: u32) -> Self {
         Ppm {
             width,
@@ -50,8 +58,12 @@ impl Format for Ppm {
         self.height
     }
 
+    fn iter_rows(&self) -> Self::IntoIter {
+        (0..self.get_height()).rev()
+    }
+
     fn set_pixel(&mut self, x: u32, y: u32, color: Color) {
-        let i = self.get_pixel(x, y);
+        let i = self.get_pixel(x, self.get_height() - y - 1);
         self.pixels[i] = color;
     }
 
@@ -73,7 +85,7 @@ impl Format for Ppm {
         destination.write_all("P3\n".as_bytes())?;
         destination.write_all(format!("{} {}\n", self.width, self.height).as_bytes())?;
         destination.write_all("255\n".as_bytes())?;
-        for pixel in self.pixels.iter() {
+        for pixel in self.pixels.iter().rev() {
             destination
                 .write_all(format!("{} {} {}\n", pixel.r(), pixel.g(), pixel.b()).as_bytes())?;
         }
@@ -86,6 +98,8 @@ pub struct Bmp {
 }
 
 impl Format for Bmp {
+    type IntoIter = Range<u32>;
+
     fn new(width: u32, height: u32) -> Self {
         Bmp {
             image: Image::new(width, height),
@@ -98,6 +112,10 @@ impl Format for Bmp {
 
     fn get_height(&self) -> u32 {
         self.image.get_height()
+    }
+
+    fn iter_rows(&self) -> Self::IntoIter {
+        0..self.get_height()
     }
 
     fn set_pixel(&mut self, x: u32, y: u32, color: Color) {
